@@ -1,0 +1,945 @@
+//26 - Setup and demonstrate password less ssh login between two docker instances with password authentication disabled.
+
+1. For first instance 
+ docker run -it -h name --rm ubuntu
+2. For second instance
+ docker pull docker.io/kalilinux/kali-rolling
+ docker run -it -h surname --rm kalilinux/kali-rolling
+3. For both instances 
+ apt update
+ apt install nano
+ apt-get install openssh-server openssh-client -y
+ service ssh start
+4. In the First instance we adduser and set password
+ adduser root
+5. In the First instance
+ ssh-keygen -t rsa
+used for creating pair (private and public) of keys rsa for ssh protocol.
+ cat ~/.ssh/id_rsa.pub
+for output public key
+ we copy the key
+6. In the Second instance
+ mkdir ~/.ssh -p
+mkdir - for creating folder/catalogue/directory
+~ - define catalogue and /.ssh - name of directory where usually ssh keys are stored.
+~/.ssh - path of directory that we are creating
+then 
+ nano ~/.ssh/authorized_keys
+nano - redactor for editing directory authorized_keys
+here we will paste the copied key
+ hostname -i
+7. Finally in the First instance we type
+ ssh root@hostname
+
+//27 - 27. Demonstrate examples of crontab patterns: weekly, only odd days of month, every 7 minutes, once a year, every minute between some hours etc.
+
+1. docker run -it -h name --rm ubuntu
+2. apt update
+3. apt install nano
+4. apt install cron
+5. mkdir folder
+6. cd folder
+7. touch a.txt b.txt c.txt
+8. ls
+9. cd ..
+10. nano check.sh, then code from gpt or github
+
+Check if both folder path and maximum number of files are provided as arguments
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 /path/to/your/folder max_files"
+    exit 1
+fi
+
+Specify the folder path
+folder_path="$1"
+
+Change to the specified folder
+cd "$folder_path" || exit
+
+Check if the folder is empty
+if [ -z "$(ls -A)" ]; then
+    echo "Folder is empty. Nothing to remove."
+    exit
+fi
+
+Get the maximum number of files to keep
+max_files="$2"
+
+Get the total number of files in the folder
+num_files=$(find . -maxdepth 1 -type f | wc -l)
+
+If the number of files exceeds the limit, remove the excess files
+if [ "$num_files" -gt "$max_files" ]; then
+    excess_files=$((num_files - max_files))
+
+Remove all files except the latest one
+    ls -t | tail -n +2 | xargs rm -f
+
+    echo "$excess_files files removed to meet the limit of $max_files files."
+else
+    echo "Number of files is within the limit. Nothing to remove."
+fi
+11. chmod 777 check.sh
+12. crontab -e, inside we write 0 3 1-31/2 * * sh /check.sh /folder 1 >/dev/null 2>&1
+(./check.sh /folder 2 //(or 1 or any number))
+13. service cron start
+xx. Optional if we need to clear nano command - echo ' ' > filename.sh
+
+//28 - Setup 2 Linux hosts using docker and transfer files/folders between them using remote file transfer utilities.
+
+1. For first instance 
+docker run -it -h name --rm ubuntu
+2. For second instance
+docker run -it -h surname --rm ubuntu
+3. For both instances 
+ apt update
+ apt install nano
+ apt-get install openssh-server openssh-client -y
+ service ssh start
+4. Passworless connection
+ In task 26 (but for the second instance no need to set kali linux ubuntu is enough)
+5. exit from second instance in first one
+//For transferring files
+6. In first instance
+ mkdir folder1
+7. In Second instance
+ mkdir folder2
+ cd folder2
+ touch.txt
+8. In first instance
+ scp root@172.17.0.10:/folder2/a.txt folder1
+9. For checking in first instance
+ cd folder1
+ ls
+//For transfering files
+10. For both instance 
+ cd ..
+11. In First instance
+ scp -r folder1 root@172.17.0.10:/folder2
+12. In second instance
+ cd folder2
+ ls
+
+//29 - Setup SSH between Linux docker instances, then block SSH using firewall.
+
+1. In the First instance
+ docker run -it -h h1 --rm --privileged --name h1 -p 8080:80 ubuntu
+here we create container as a service
+2. In the Second instance
+  docker run -it -h h2 --rm --privileged --name h2 -p 8081:80 ubuntu
+3. For Both instances
+ apt update
+ apt install nginx -y
+ apt-get install openssh-server openssh-client -y
+ apt install nano
+ service nginx start
+ service ssh start
+4. Enter to the Browser, then in the first tab in url we will write localhost:8080 and in second tab localhost:8081
+5. For the first instance
+echo '<h1>Salam from h1</h1>' > /var/www/html/index.html
+6. For the second instance
+echo '<h1>Salam from h2</h1>' > /var/www/html/index.html
+7. Refresh the tabs for checking
+8. In the Second Instance
+ apt install iptables
+9. In the second instance 
+ nano /etc/ssh/sshd_config
+then we need found #PermitRootLogin porhibit-password change it to PermitRootLogin yes
+then we need found #PasswordAuthentification yes change it to PasswordAuthentification 
+10. In the second instance
+ passwd root (need set password)
+ hostname -i
+ service ssh restart
+11. In the first instance
+ ssh root@hostname
+ (enter password)
+12. In the Second Instance
+ iptables -A INPUT -p tcp --dport 22 -j DROP
+13. In the First Instance
+ ssh root@hostname
+14. In The Second Instance
+ iptables -D INPUT -p tcp --dport 22 -j DROP
+tcp - this dont allow user to set tcp tunnel through ssh connection
+-p tcp - show tcp protocol
+-dport 22 - show ssh port
+15. In THE FIRST INSTANCE
+ ssh root@hostname
+
+//30 - Create simple web site using docker nginx container and access it from the different container using curl or wget. Use firewall to block/unblock access to the web site.
+
+1. In the First instance
+ docker run -it -h h1 --rm --privileged --name h1 -p 8080:80 ubuntu
+here we create container as a service
+2. In the Second instance
+  docker run -it -h h2 --rm --privileged --name h2 -p 8081:80 ubuntu
+3. For Both instances
+ apt update
+ apt install nginx -y
+ apt install curl
+ service nginx start
+4. Enter to the Browser, then in the first tab in url we will write localhost:8080 and in second tab localhost:8081
+5. For the first instance
+echo '<h1>Salam from h1</h1>' > /var/www/html/index.html
+6. For the second instance
+echo '<h1>Salam from h2</h1>' > /var/www/html/index.html
+7. Refresh the tabs for checking
+8. In the Second Instance
+ apt install iptables
+9. In The first we write
+ curl http://hostname
+10. In The Second instance
+iptables -A INPUT -p tcp --dport 80 -j DROP
+11. In The first we write
+ curl http://hostname
+12. In The Second instance
+iptables -A INPUT -p tcp --dport 80 -j DROP
+13. In The First
+curl http://hostname 
+
+//31 - Create simple web site using docker nginx container, block 80 port. Then access website from different container (using curl or wget) via SSH tunneling.
+
+1. In the First instance
+ docker run -it -h h1 --rm --privileged --name h1 -p 8080:80 ubuntu
+here we create container as a service
+2. In the Second instance
+  docker run -it -h h2 --rm --privileged --name h2 -p 8081:80 ubuntu
+3. For Both instances
+ apt update
+ apt install nginx -y
+ apt install curl
+ service nginx start
+4. Enter to the Browser, then in the first tab in url we will write localhost:8080 and in second tab localhost:8081
+5. For the first instance
+echo '<h1>Salam from h1</h1>' > /var/www/html/index.html
+6. For the second instance
+echo '<h1>Salam from h2</h1>' > /var/www/html/index.html
+7. Refresh the tabs for checking
+8. In the Second Instance
+ apt install iptables
+9. In The first we write
+ curl http://hostname
+10. In The Second instance
+ iptables -A INPUT -p tcp  -s hostnameof1stinstance --dport 80 -j ACCEPT
+ iptables -A INPUT -p tcp --dport 80 -j DROP
+11. In The first we write
+ curl http://hostname
+
+//33 - Demonstrate SSH port forwarding with L and R options.
+
+1. In the First instance
+ docker run -it -h h1 --rm --privileged --name h1 -p 8080:80 ubuntu
+here we create container as a service
+2. In the Second instance
+  docker run -it -h h2 --rm --privileged --name h2 -p 8081:80 ubuntu
+3. For Both instances
+ apt update
+ apt install nginx -y
+ apt-get install openssh-server openssh-client -y
+ apt install nano
+ apt install curl
+ service ssh start
+ service nginx start
+4. Enter to the Browser, then in the first tab in url we will write localhost:8080 and in second tab localhost:8081
+5. For the first instance
+echo '<h1>Salam from h1</h1>' > /var/www/html/index.html
+6. For the second instance
+echo '<h1>Salam from h2</h1>' > /var/www/html/index.html
+7. Refresh the tabs for checking
+8. In the Second Instance
+ apt install iptables
+9. In the second instance 
+ nano /etc/ssh/sshd_config
+then we need found #PermitRootLogin porhibit-password change it to PermitRootLogin yes
+then we need found #PasswordAuthentification yes change it to PasswordAuthentification 
+10. In the second instance
+ passwd root (need set password)
+ hostname -i
+11. In the first instance
+ ssh root@hostname
+ (enter password)
+ if it is successfully entered exit
+if there problem with password entering we press enter, write command service ssh restart in the second instance and try again in the first instance. 
+12. In the second instance 
+ iptables -A INPUT -p tcp -s 127.0.0.1 --dport 80 -j ACCEPT
+ iptables -A INPUT -p tcp --dport 80 -j DROP
+13. In The First instance
+ ssh -L 8888:localhost:80 root@172.17.0.3 and enter the password, then dont exit
+14. Open new cmd 
+15. In new third terminal
+ docker exec -it h1 bash
+ curl http://localhost:8888
+16. In the first instance we exit from second, then
+ ssh -R 8888:localhost:80 root@172.17.0.3
+17. In the thir terminal we exit from First insrtance, then
+ docker exec -it h2 bash
+ curl http://localhost:8888
+
+//35 - Demonstrate permission management in Linux. Setup docker Linux container, create multiple users and folders, setup group level permissions.
+
+1. For first instance 
+docker run -it -h name --rm ubuntu
+2. For second instance
+docker run -it -h surname --rm ubuntu
+3. For both instances 
+ apt update
+ apt install nano
+ apt-get install openssh-server openssh-client -y
+ service ssh start
+4. In the second instance 
+ nano /etc/ssh/sshd_config
+then we need found #PermitRootLogin porhibit-password change it to PermitRootLogin yes
+then we need found #PasswordAuthentification yes change it to PasswordAuthentification 
+ passwd root (need set password)
+5. In the second instance
+ adduser user2
+ mkdir test
+ cd test
+ mkdir user2
+ cd user2
+ mkdir images documents
+ cd ..
+ cd ..
+ nano /etc/ssh/sshd_config
+here we will found Subsystem sftp /usr/lib/openssh/sftp-server and change it to #Subsystem      sftp    /usr/lib/openssh/sftp-server
+then in the bottom in last empty line we past 
+ Subsystem sftp internal-sftp
+ Match User user2
+  X11Forwarding no
+  AllowTcpForwarding no
+  ChrootDirectory /test/user2
+  ForceCommand internal-sftp
+after it ctrl+s and ctrl+x
+6. In the same second instance
+ chmod 755 /test/user2
+ chown root:root /test/user2
+ chown -R user2:user2 /test/user2/*
+ service ssh restart
+7. In the First instance 
+ sftp root@172.17.0.3 (here 172.17.0.3 is hostname of 2nd instance)
+ ls /
+ exit
+ sftp user2@172.17.0.3
+ ls /
+ 
+
+//36 - Create bash script to remove all files except the latest one in the folder if number of files is more than a given number. Schedule the script to run on daily basis.
+
+1. docker run -it -h name --rm ubuntu
+2. apt update
+3. apt install nano
+4. apt install cron
+5. mkdir folder
+6. cd folder
+7. touch a.txt b.txt c.txt
+8. ls
+9. cd ..
+10. nano check.sh, then code from gpt or github
+
+Check if both folder path and maximum number of files are provided as arguments
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 /path/to/your/folder max_files"
+    exit 1
+fi
+
+Specify the folder path
+folder_path="$1"
+
+Change to the specified folder
+cd "$folder_path" || exit
+
+Check if the folder is empty
+if [ -z "$(ls -A)" ]; then
+    echo "Folder is empty. Nothing to remove."
+    exit
+fi
+
+Get the maximum number of files to keep
+max_files="$2"
+
+Get the total number of files in the folder
+num_files=$(find . -maxdepth 1 -type f | wc -l)
+
+If the number of files exceeds the limit, remove the excess files
+if [ "$num_files" -gt "$max_files" ]; then
+    excess_files=$((num_files - max_files))
+
+Remove all files except the latest one
+    ls -t | tail -n +2 | xargs rm -f
+
+    echo "$excess_files files removed to meet the limit of $max_files files."
+else
+    echo "Number of files is within the limit. Nothing to remove."
+fi
+11. chmod 777 check.sh
+12. crontab -e, inside we write * * * * * sh /check.sh /folder 1
+(./check.sh /folder 2 //(or 1 or any number))
+13. service cron start
+
+//38 - Create 3 docker Linux containers. Setup SSH password less login between all of them.
+
+1. For first instance 
+docker run -it -h host --rm ubuntu
+2. For second instance
+docker run -it -h client --rm ubuntu
+3. For third instance
+docker run -it -h manage --rm ubuntu
+3. For all of instances 
+ apt update
+ apt install nano
+ apt-get install openssh-server openssh-client -y
+ service ssh start
+4. For each instance  
+ nano /etc/ssh/sshd_config
+then we need found #PermitRootLogin porhibit-password change it to PermitRootLogin yes
+then we need found #PasswordAuthentification yes change it to PasswordAuthentification 
+ passwd root (need set password)
+5. For each instance
+ service ssh restart
+ ssh-keygen
+ ssh-copy-id root@hostname
+ ssh root@hostname
+
+//39 - Create bash script that compresses the given folder and transfers the compressed file to another host
+
+1. For first instance 
+docker run -it -h host --rm ubuntu
+2. For second instance
+docker run -it -h client --rm ubuntu
+3. For both instances 
+ apt update
+ apt install nano
+ apt-get install openssh-server openssh-client -y
+ service ssh start
+4. In The First Instance
+ mkdir folder
+ cd folder
+ touch a.txt
+ ls
+ cd ..
+5. In The Second
+ hostname -i
+ mkdir folder2
+6. In the Second
+ nano /etc/ssh/sshd_config
+then we need found #PermitRootLogin porhibit-password change it to PermitRootLogin yes
+then we need found #PasswordAuthentification yes change it to PasswordAuthentification 
+ passwd root (need set password)
+ service ssh restart
+7. In The First
+ nano host.sh
+enter the next code
+
+#!/bin/bash
+
+Set variables
+source_folder="/folder"
+compressed_filename="compressed_folder.tar.gz"
+destination_host="root@172.17.0.3:/folder2"
+
+Navigate to the source folder
+cd "$source_folder" || exit 1
+
+Compress the folder using tar and gzip
+tar -czf "$compressed_filename" . 
+
+Transfer the compressed file to the destination host using scp
+scp "$compressed_filename" "$destination_host"
+
+Clean up - remove the compressed file locally
+rm "$compressed_filename"
+8. In the first instance
+ chmod 777 host.sh
+ ./host.sh
+9. In the second instance check
+ cd folder2
+ ls
+
+//40 - Create bash script that moves images and documents from the given folder (e.g.: /path/to/downloads/folder) into the corresponding folders (e.g.: /path/to/images/folder, /path/to/documents/folder,). Schedule the script to run on every 5 minutes between 9:00-18:00.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu 
+ apt update
+ apt install nano
+ apt install cron
+2. In the first instance
+ nano host.sh
+paste here code:
+
+#!/bin/bash
+
+# Check if the source folder is provided as an argument
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 <source_folder>"
+    exit 1
+fi
+
+source_folder=$1
+
+# Check if the provided path is a directory
+if [ ! -d "$source_folder" ]; then
+    echo "$source_folder is not a valid directory."
+    exit 1
+fi
+
+# Define destination folders
+images_folder="/images"
+documents_folder="/documents"
+
+# Create destination folders if they don't exist
+mkdir -p "$images_folder"
+mkdir -p "$documents_folder"
+
+# Move image files to the images folder
+find "$source_folder" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jp>
+
+# Move document files to the documents folder
+find "$source_folder" -maxdepth 1 -type f \( -iname "*.pdf" -o -iname "*.do>
+
+echo "Images and documents moved successfully."
+
+3. In same first instance
+ mkdir image 
+ mkdir download
+ mkdir documents
+ cd download
+ touch a.txt b.txt c.png d.png
+ cd ..
+ chmod 777 host.sh
+ 
+4. In SAME FIRST INSTANCE
+
+ crontab -e
+in the end(last empty line) we need write:
+* * * * * sh /host.sh /download
+ctrl+s and ctrl+x
+ service cron start 
+
+4. For checking after minute
+ cd documents
+ ls
+
+//41 - Setup password less SSH between Linux docker instances, then block SSH using firewall.
+
+. In the First instance
+ docker run -it -h h1 --rm --privileged --name h1 -p 8080:80 ubuntu
+here we create container as a service
+2. In the Second instance
+  docker run -it -h h2 --rm --privileged --name h2 -p 8081:80 ubuntu
+3. For Both instances
+ apt update
+ apt install nginx -y
+ apt-get install openssh-server openssh-client -y
+ apt install nano
+ service nginx start
+ service ssh start
+4. Enter to the Browser, then in the first tab in url we will write localhost:8080 and in second tab localhost:8081
+5. For the first instance
+echo '<h1>Salam from h1</h1>' > /var/www/html/index.html
+6. For the second instance
+echo '<h1>Salam from h2</h1>' > /var/www/html/index.html
+7. Refresh the tabs for checking
+8. In the Second Instance
+ apt install iptables
+9. In the second instance 
+ nano /etc/ssh/sshd_config
+then we need found #PermitRootLogin porhibit-password change it to PermitRootLogin yes
+then we need found #PasswordAuthentification yes change it to PasswordAuthentification 
+10. In the second instance
+ passwd root (need set password)
+ hostname -i
+ service ssh restart
+11. In the first instance
+ ssh-keygen
+ ssh-copy-id root@hostname
+(enter password)
+ ssh root@hostname
+12. In the Second Instance
+ iptables -A INPUT -p tcp --dport 22 -j DROP
+13. In the First Instance
+ ssh root@hostname
+14. In The Second Instance
+ iptables -D INPUT -p tcp --dport 22 -j DROP
+tcp - this dont allow user to set tcp tunnel through ssh connection
+-p tcp - show tcp protocol
+-dport 22 - show ssh port
+15. In THE FIRST INSTANCE
+ ssh root@hostname
+
+//42 - Create shell script to remove only images from the given folder and schedule it to run every 5 minutes between 6-9 PM every day.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu 
+ apt update
+ apt install nano
+ apt install cron
+2. In the first instance
+ nano host.sh
+paste here code:
+
+#!/bin/bash
+
+# Check if a folder path is provided as an argument
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 /images"
+    exit 1
+fi
+
+# Get the folder path from the command-line argument
+folder_path="$1"
+
+# Verify that the provided path is a directory
+if [ ! -d "$folder_path" ]; then
+    echo "Error: $folder_path is not a valid directory."
+    exit 1
+fi
+
+# Change to the specified folder
+cd "$folder_path" || exit
+
+# Remove only image files
+find . -type f \( -iname "*.jpg" -o -iname "*.png" -o -iname "*.gif" \) -ex>
+
+echo "Images removed from $folder_path"
+
+3. In the first instance
+ mkdir download
+ mkdir images
+ cd download
+ touch a.txt b.png c.jpg
+ ls
+ cd ..
+ chmod 777 host.sh
+4. In THE SAME FIRST
+ crontab -e
+in the end(last empty line) we need write:
+* * * * * sh /host.sh /download
+ctrl+s and ctrl+x
+ service cron start 
+
+//43 - Create shell script to synchronize files from the folder in the remote host to the local folder. Schedule it to run every Saturday.
+1. For first instance 
+ docker run -it -h host --rm ubuntu
+2. For second instance
+ docker run -it -h client --rm ubuntu
+3. For both instances 
+ apt update
+ apt install nano
+ apt-get install openssh-server openssh-client -y
+ service ssh start
+4. In the second instance
+ In the second instance 
+ nano /etc/ssh/sshd_config
+then we need found #PermitRootLogin porhibit-password change it to PermitRootLogin yes
+then we need found #PasswordAuthentification yes change it to PasswordAuthentification
+ passwd root (need set password)
+ hostname -i
+ service ssh restart
+5. In the first instance
+ ssh-keygen
+ ssh-copy-id root@hostname
+(enter password)
+ ssh root@hostname
+6. In the first
+ mkdir local
+7. In THe second
+ mkdir remote
+ cd remote
+ touch a.txt b.txt c.txt
+ ls
+ cd ..
+8. In the first
+ nano host.sh
+paste the code : 
+
+#!/bin/bash
+
+# Check if a remote folder and local folder are provided as arguments
+if [ $# -ne 2 ]; then
+  echo "Usage: $0 <remote_folder> <local_folder>"
+  exit 1
+fi
+
+remote_folder=$1
+local_folder=$2
+
+# Replace 'your_remote_username' with your actual remote username and 'your_remote_ip' with the IP address of your remote machine
+user="root"
+remote_host="172.17.0.4"
+
+# Use scp to copy files from remote host to local folder
+scp -r "$user"@"$remote_host":"$remote_folder" "$local_folder"
+
+echo "Files synchronized from $remote_folder to $local_folder"
+
+//here root is our username and 172.17.0.4 is hostname of second instance
+
+9. In the first 
+ chmod 777 host.sh
+ crontab -e
+in the end(last empty line) we need write:
+* * * * * sh /host.sh /remote /local
+ctrl+s and ctrl+x
+ service cron start 
+
+10. For checking in the first
+ cd local
+ ls
+ cd remote
+ ls
+
+//44 - Create shell script to synchronize files from the local folder to remote host. Schedule it to run every 15 minutes between 6-9 AM.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu
+2. For second instance
+ docker run -it -h client --rm ubuntu
+3. For both instances 
+ apt update
+ apt install nano
+ apt-get install openssh-server openssh-client -y
+ service ssh start
+4. In the second instance
+ In the second instance 
+ nano /etc/ssh/sshd_config
+then we need found #PermitRootLogin porhibit-password change it to PermitRootLogin yes
+then we need found #PasswordAuthentification yes change it to PasswordAuthentification
+ passwd root (need set password)
+ hostname -i
+ service ssh restart
+5. In the first instance
+ ssh-keygen
+ ssh-copy-id root@hostname
+(enter password)
+ ssh root@hostname
+6. In the first
+ mkdir local
+ cd local
+ touch a.txt b.txt c.txt
+ ls 
+ cd ..
+7. In the second 
+ mkdir remote
+8. In the first 
+ nano host.sh
+here paste code: 
+
+#!/bin/bash
+
+# Check if a local folder and remote folder are provided as arguments
+if [ $# -ne 2 ]; then
+  echo "Usage: $0 <local_folder> <remote_folder>"
+  exit 1
+fi
+
+local_folder=$1
+remote_folder=$2
+
+# Replace 'your_remote_username' with your actual remote username and 'your>user="root"
+remote_host="172.17.0.4"
+
+# Use scp to copy files from local folder to remote host
+scp -r "$local_folder" "$user"@"$remote_host":"$remote_folder"
+
+echo "Files synchronized from $local_folder to $remote_folder on $remote_ho>
+
+//here root is our username and 172.17.0.4 is hostname of second instance
+
+9. In the First
+ chmod 777 host.sh
+ crontab -e
+in the end(last empty line) we need write:
+* * * * * sh /host.sh /remote /local
+ctrl+s and ctrl+x
+ service cron start 
+
+10. In the second for the checking
+ cd remote
+ ls
+ cd local
+ ls
+
+//45 - Create shell script merge text files in the given folder. Schedule it to run every minute.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu 
+ apt update
+ apt install nano
+ apt install cron
+2. In the first instance
+ nano host.sh
+paste here code:
+
+#!/bin/bash
+
+# Check if a folder path is provided as an argument
+if [ $# -eq 0 ]; then
+  echo "Usage: $0 <folder_path>"
+  exit 1
+fi
+
+folder_path=$1
+merged_file="$folder_path/merged_file.txt"
+
+# Check if the folder exists
+if [ ! -d "$folder_path" ]; then
+  echo "Error: Folder '$folder_path' does not exist."
+  exit 1
+fi
+
+# Check if there are any text files in the folder
+txt_files=$(find "$folder_path" -type f -name "*.txt")
+if [ -z "$txt_files" ]; then
+  echo "Error: No text files found in the folder."
+  exit 1
+fi
+
+# Merge text files into a single file
+cat $txt_files > "$merged_file"
+
+echo "Text files merged successfully. Merged file: $merged_file"
+
+//no changes
+
+3. In the first instance
+ chmod 777 host.sh
+ mkdir folder
+ cd folder
+ touch a.txt b.txt 
+ ls
+ cd ..
+4. In the first
+ crontab -e
+in the end(last empty line) we need write:
+* * * * * sh /host.sh /folder
+ctrl+s and ctrl+x
+ service cron start 
+
+5. For checking in first instance
+ cd folder
+ ls
+
+//46 - Create shell script that would archive the given folder and transfer it to remote host. Schedule script to run on daily basis.
+
+1. For first instance 
+docker run -it -h host --rm ubuntu
+2. For second instance
+docker run -it -h client --rm ubuntu
+3. For both instances 
+ apt update
+ apt install nano
+ apt-get install openssh-server openssh-client -y
+ service ssh start
+4. In The First Instance
+ mkdir folder
+ cd folder
+ touch a.txt
+ ls
+ cd ..
+5. In The Second
+ hostname -i
+ mkdir folder2
+6. In the Second
+ nano /etc/ssh/sshd_config
+then we need found #PermitRootLogin porhibit-password change it to PermitRootLogin yes
+then we need found #PasswordAuthentification yes change it to PasswordAuthentification 
+ passwd root (need set password)
+ service ssh restart
+7. In The First
+ nano host.sh
+enter the next code
+
+#!/bin/bash
+
+Set variables
+source_folder="/folder"
+compressed_filename="compressed_folder.tar.gz"
+destination_host="root@172.17.0.3:/folder2"
+
+Navigate to the source folder
+cd "$source_folder" || exit 1
+
+Compress the folder using tar and gzip
+tar -czf "$compressed_filename" . 
+
+Transfer the compressed file to the destination host using scp
+scp "$compressed_filename" "$destination_host"
+
+Clean up - remove the compressed file locally
+rm "$compressed_filename"
+8. In the first instance
+ chmod 777 host.sh
+ ./host.sh
+9. In the second instance check
+ cd folder2
+ ls
+
+//47 - Create shell script that would remove all the subfolders except the latest in a given folder. Schedule script to run every half hour.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu 
+ apt update
+ apt install nano
+ apt install cron
+2. In the first instance
+ nano host.sh
+paste here code:
+
+ #!/bin/bash
+
+# Check if a folder path is provided as an argument
+if [ $# -eq 0 ]; then
+  echo "Usage: $0 <folder_path>"
+  exit 1
+fi
+
+folder_path=$1
+
+# Check if the folder exists
+if [ ! -d "$folder_path" ]; then
+  echo "Error: Folder '$folder_path' does not exist."
+  exit 1
+fi
+
+# Get a list of subfolders in the provided folder, sorted by modification time
+subfolders=$(find "$folder_path" -maxdepth 1 -mindepth 1 -type d -exec stat --format='%Y %n' {} \; | sort -n | awk '{print $2}')
+
+# Check if there are any subfolders
+if [ -z "$subfolders" ]; then
+  echo "No subfolders found in the folder."
+  exit 0
+fi
+
+# Keep the latest subfolder and remove the rest
+latest_subfolder=$(echo "$subfolders" | tail -n 1)
+echo "Keeping the latest subfolder: $latest_subfolder"
+
+for subfolder in $subfolders; do
+  if [ "$subfolder" != "$latest_subfolder" ]; then
+    echo "Removing subfolder: $subfolder"
+    rm -r "$subfolder"
+  fi
+done
+
+echo "Operation completed successfully."
+
+
+3. In the first instance
+ chmod 777 host.sh
+ mkdir folder
+ cd folder
+ mkdir a
+ mkdir b
+ mkdir c
+ ls
+ cd ..
+
+4. In the first
+ crontab -e
+in the end(last empty line) we need write:
+* * * * * sh /host.sh /folder
+ctrl+s and ctrl+x
+ service cron start 
+
+5. In the first for checking
+ cd folder
+ ls

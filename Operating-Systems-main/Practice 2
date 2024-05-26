@@ -1,0 +1,1047 @@
+// 76.	Write code in C that would generate 6 processes. Use fork() function exactly 3 times and output the PID of each process.
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif 
+#include <sys/stat.h>
+#include <sys/mman.h>
+int main(int argc, char const *argv[])
+{
+    int process_id1 = fork();
+    if(process_id1 > 0){
+        printf("process1 id: %d\n", process_id1);
+        wait(NULL);
+    }
+    else{
+        printf("process2 id: %d\n", process_id1);
+        int process_id2 = fork();
+        if(process_id2 > 0){
+            printf("process3 id: %d\n", process_id2);
+            wait(NULL);
+    }
+        else{
+            printf("process4 id: %d\n", process_id2);
+            int process_id3 = fork();
+            if(process_id3 > 0){
+                printf("process5 id: %d\n", process_id3);
+                wait(NULL);
+    }
+            else{
+                printf("process6 id: %d\n", process_id3);
+            
+            }
+        }
+    }
+}
+
+// 77.	Write code in C using fork function that outputs "National Aviation Academy" in 2 processes. Only the first and last words should be printed by the main process.
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif 
+#include <sys/stat.h>
+#include <sys/mman.h>
+int main(int argc, char const *argv[])
+{
+    int fork_id = fork();
+    if (fork_id > 0) {
+        printf("National ");
+        fflush(stdout);  // Flush the output to ensure immediate printing
+        wait(NULL);
+        printf("Academy\n");
+    } else {
+        printf("Aviation ");
+    }
+}
+
+// 78.	Write code in C that would generate random number inside the forked child process then output the number in main process. Use memory shared variable.
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif 
+#include <sys/stat.h>
+#include <sys/mman.h>
+int main(int argc, char const *argv[])
+{
+    int *number = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    srand(time(NULL));
+    if(fork() > 0){
+        wait(NULL);
+        printf("Random number is: %d", *number);
+    }
+    else{
+        int random_number = rand();
+        *number = random_number;
+    }
+    return 0;
+}
+
+//80 - Develop a simple shell script that would detect if the given file is changed. The use crontab to schedule the script to run every 5 minutes.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu 
+ apt update
+ apt install nano
+ apt install cron
+2. In the first instance
+ nano host.sh
+paste here code:
+
+#!/bin/bash
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <file_path>"
+    exit 1
+fi
+
+file_path="$1"
+
+# Create a file to store the previous hash value if it doesn't exist
+hash_file=".hashfile"
+touch "$hash_file"
+
+# Get the current hash value of the file
+current_hash=$(md5sum "$file_path" | awk '{print $1}')
+
+# Get the previous hash value from the hash file
+previous_hash=$(cat "$hash_file")
+
+# Compare current and previous hash values
+if [ "$current_hash" != "$previous_hash" ]; then
+    echo "File has changed."
+    # Update the hash file with the new hash value
+    echo "$current_hash" > "$hash_file"
+else
+    echo "File has not changed."
+fi
+
+3. In first instance
+ chmod 777 host.sh
+ mkdir folder
+ cd folder
+ touch a.txt
+ echo ' Some text '> a.txt
+ cat a.txt
+ cd ..
+ ./host.sh /folder/a.txt
+It is actually end, but if there need for crontab, then step 4 
+
+4. crontab -e
+in the end(last empty line) we need write:
+* * * * * sh /host.sh /folder/a.txt
+ctrl+s and ctrl+x
+ service cron start 
+ 
+//81.	Write code in C to output the number of files in given folder in Linux. You may create shell script and call it in C code.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu 
+ apt update
+ apt install nano
+ apt install cron
+2. In the first instance
+ nano host.sh
+paste here code:
+
+#!/bin/bash
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <folder_path>"
+    exit 1
+fi
+
+folder_path="$1"
+
+# Check if the specified path is a directory
+if [ ! -d "$folder_path" ]; then
+    echo "Error: $folder_path is not a valid directory."
+    exit 1
+fi
+
+# Use find to count the number of files in the folder
+num_files=$(find "$folder_path" -type f | wc -l)
+
+echo "Number of files in $folder_path: $num_files"
+
+
+3. In first instance
+ chmod 777 host.sh
+ mkdir folder
+ cd folder
+ touch a.txt b.txt c.txt
+ ls
+ cd ..
+ ./host.sh /folder
+
+4. In first instance
+ apt install build-essential -y 
+ nano host.c
+then there we will paste 
+
+ #include<stdio.h>
+ #include<stdlib.h>
+ #include <unistd.h>
+
+int main(int argc, char const *argv[])
+{
+    char p[20];
+    sprintf(p, "%s", argv[1]);
+    char *programName = "sh";
+    char *args[] = {programName, "host.sh", p, NULL};
+    execvp(programName, args);
+}
+5. In FIRST
+ gcc -o host  host.c
+ ./host /folder 
+
+//82 - Write code in C to output the total number of lines in all files in given directory. You may create shell script and call it in C code.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu 
+ apt update
+ apt install nano
+ apt install cron
+2. In the first instance
+ nano host.sh
+paste here code:
+
+#!/bin/bash
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <directory_path>"
+    exit 1
+fi
+
+directory_path="$1"
+
+# Check if the specified path is a directory
+if [ ! -d "$directory_path" ]; then
+    echo "Error: $directory_path is not a valid directory."
+    exit 1
+fi
+
+# Use find and xargs to count the total number of lines in all files
+total_lines=$(find "$directory_path" -type f -exec cat {} + | wc -l)
+
+echo "Total number of lines in all files in $directory_path: $total_lines"
+
+
+3. In first instance
+ chmod 777 host.sh
+ mkdir folder
+ cd folder
+ touch a.txt b.txt c.txt
+ ls
+ echo ' Satisfaction ' >a.txt
+ echo ' Satisfaction ' >b.txt
+ cd ..
+ ./host.sh /folder
+
+4. In first instance
+ apt install build-essential -y 
+ nano host.c
+then there we will paste 
+
+ #include<stdio.h>
+ #include<stdlib.h>
+ #include <unistd.h>
+
+int main(int argc, char const *argv[])
+{
+    char p[20];
+    sprintf(p, "%s", argv[1]);
+    char *programName = "sh";
+    char *args[] = {programName, "host.sh", p, NULL};
+    execvp(programName, args);
+}
+5. In FIRST
+ gcc -o host  host.c
+ ./host /folder
+
+// 83.	Write code in C using fork function that outputs your "Firstname Patronymic Lastname" in 2 processes. Only Patronymic should be printed using the forked child process.
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif 
+#include <sys/stat.h>
+#include <sys/mman.h>
+int main(int argc, char const *argv[])
+{
+    if(fork() > 0){
+        printf("Firstname ");
+        fflush(stdout);
+        wait(NULL);
+        printf("Lastname");
+    }
+    else{
+        printf("Patronymic ");
+    }
+}
+
+// 84.	Write code in C to calculate difference and sum of 2 integer strings of the same size in separate processes and combine them into one string. Use malloc/calloc to create variable for storing the result. Example: "236", "121" -> "115357".
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif 
+#include <sys/stat.h>
+#include <sys/mman.h>
+int main(int argc, char const *argv[])
+{
+    int number1;
+    int number2;
+    printf("Enter number 1: ");
+    scanf("%d", &number1);
+    printf("Enter number 2: ");
+    scanf("%d", &number2);
+    int difference = number1 - number2;
+    int sum = number1 + number2;
+    char *strDifference = malloc(2 * sizeof(long));
+    char *strSum = calloc(2, sizeof(long));
+    char *result = malloc(4 * sizeof(long));
+    sprintf(strSum, "%d", sum);
+    sprintf(strDifference, "%d", difference);
+    strcat(result, strDifference);
+    strcat(result, strSum);
+    printf("Result: %s\n", result);
+    return 0;
+}
+
+//85 - Write code in C to output memory and storage size of Linux host. You may create shell script and call it in C code.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu 
+ apt update
+ apt install nano
+ apt install cron
+2. In the first instance
+ nano host.sh
+paste here code:
+
+ #!/bin/bash
+
+# Output memory information
+echo "Memory Information:"
+free -h
+
+# Output storage information
+echo -e "\nStorage Information:"
+df -h
+
+3. In first instance
+ chmod 777 host.sh
+ ./host.sh
+4. In first instance
+ apt install build-essential -y 
+ nano host.c
+then there we will paste 
+#include<stdio.h>
+#include<stdlib.h>
+#include <unistd.h>
+
+int main(int argc, char const *argv[])
+{
+    char *programName = "sh";
+    char *args[] = {programName, "host.sh", ".", NULL};
+    execvp(programName, args);
+}
+5. In the first instance
+ gcc -o host  host.c
+ ./host
+
+//86 - Write code in C to output the latest modified file name in the given directory. You may create shell script and call it in C code.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu 
+ apt update
+ apt install nano
+2. In the first instance
+ nano host.sh
+paste here code:
+
+#!/bin/bash
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <directory_path>"
+    exit 1
+fi
+
+directory_path="$1"
+
+# Check if the specified path is a directory
+if [ ! -d "$directory_path" ]; then
+    echo "Error: $directory_path is not a valid directory."
+    exit 1
+fi
+
+# Use find and stat to get the latest modified file
+latest_file=$(find "$directory_path" -type f -exec stat --format="%Y %n" {} + | sort -nr | head -n 1 | awk '{print $2}')
+
+if [ -n "$latest_file" ]; then
+    echo "Latest modified file in $directory_path: $latest_file"
+else
+    echo "No files found in $directory_path."
+fi
+
+3. In first instance
+ chmod 777 host.sh
+ mkdir folder
+ cd folder
+ touch a.txt b.txt c.txt
+ ls
+ echo ' Satisfaction ' >a.txt
+ echo ' Satisfaction ' >b.txt
+ cd ..
+ ./host.sh /folder
+
+4. In first instance
+ apt install build-essential -y 
+ nano host.c
+then there we will paste 
+
+ #include<stdio.h>
+ #include<stdlib.h>
+ #include <unistd.h>
+
+int main(int argc, char const *argv[])
+{
+    char p[20];
+    sprintf(p, "%s", argv[1]);
+    char *programName = "sh";
+    char *args[] = {programName, "host.sh", p, NULL};
+    execvp(programName, args);
+}
+5. In FIRST
+ gcc -o host  host.c
+ ./host /folder
+
+// 87.	Write code in C to create 3 processes. Generate random number in each process and output the sum of all numbers in the main process. Use shared memory variable and no loops are allowed.
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif 
+#include <sys/stat.h>
+#include <sys/mman.h>
+
+int main(int argc, char const *argv[])
+{
+    int *number = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        srand(time(NULL)  ^  getpid());
+        *number = 0;
+    if(fork() > 0){
+        int random1 = rand() % 10000;
+        *number += random1;
+        printf("\n1 is: %d\n", random1);
+        wait(NULL);
+        printf("Sum is: %d", *number);
+    }
+    else{
+        if(fork() > 0){
+            srand(time(NULL)  ^  getpid());
+            int random2 = rand() % 10000;
+            *number += random2;
+            printf("\n2 is: %d\n", random2);
+            wait(NULL);
+        }
+        else{
+            srand(time(NULL)  ^  getpid());
+            int random3 = rand() % 10000;
+            *number += random3;
+            printf("3 is: %d\n", random3);
+        }
+    }
+}
+
+// 88.	Write code in C to generate Fibonacci sequence of size N and output the last number in sequence. Use malloc/calloc to create variable for storing the sequence. Example: N=5 -> 1, 1, 2, 3, 5 -> 5.
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif 
+#include <sys/stat.h>
+#include <sys/mman.h>
+
+int main(int argc, char const *argv[])
+{
+    int number;
+    printf("Enter the size of the Fibonacci sequence (N): ");
+    scanf("%d", &number);
+    if (number <= 0) {
+        printf("Invalid input. N should be a positive integer.\n");
+        return 1; // Return an error code
+    }
+    long long *fibonacci = malloc(number * sizeof(long long));
+    fibonacci[0] = 1;
+    fibonacci[1] = 1;
+    for (int i = 2; i < number; i++) {
+        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
+    }
+    printf("Fibonacci sequence of size %d: ", number);
+    for (int i = 0; i < number; i++) {
+        printf("%llu", fibonacci[i]);
+        if (i < number - 1) {
+            printf(", ");
+        }
+    }
+    printf("\nLast number in the sequence: %llu\n", fibonacci[number - 1]);
+    free(fibonacci);
+    return 0;  
+}
+
+// 90.	Write code in C that would generate 8 processes using fork function and output the PID of each process. No loops are allowed.
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif 
+#include <sys/stat.h>
+#include <sys/mman.h>
+int main(int argc, char const *argv[])
+{
+    int process_id1 = fork();
+    if(process_id1 > 0){
+        printf("Process1 id: %d\n", process_id1);
+        wait(NULL);
+        int process_id2 = fork();
+        if(process_id2 > 0){
+            printf("Process3 id: %d\n", process_id2); 
+            wait(NULL);
+            int process_id3 = fork();
+            if(process_id3 > 0){
+                printf("Process5 id: %d\n", process_id3); 
+                wait(NULL);
+            }   
+            else{
+                printf("Process6 id: %d\n", process_id3);  
+            }
+        }
+        else{
+            printf("Process4 id: %d\n", process_id2);
+            int process_id4 = fork();
+            if(process_id4 > 0){
+                printf("Process7 id: %d\n", process_id4); 
+                wait(NULL);
+            }   
+            else{
+                printf("Process8 id: %d\n", process_id4);  
+            }
+        }
+    }
+    else{
+        printf("Process2 id: %d\n", process_id1); 
+    }
+}
+
+// 91.	Write code in C to output the number of files with specific extension in a folder in Linux. You may create shell script and call it in C code.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu 
+ apt update
+ apt install nano
+2. In the first instance
+ nano host.sh
+paste here code:
+
+#!/bin/bash
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <directory_path> <file_extension>"
+    exit 1
+fi
+
+directory_path="$1"
+file_extension="$2"
+
+# Check if the specified path is a directory
+if [ ! -d "$directory_path" ]; then
+    echo "Error: $directory_path is not a valid directory."
+    exit 1
+fi
+
+# Use find to count the number of files with the specified extension
+num_files=$(find "$directory_path" -type f -name "*.$file_extension" | wc -l)
+
+echo "Number of .$file_extension files in $directory_path: $num_files"
+
+3. In first instance
+ chmod 777 host.sh
+ mkdir folder
+ cd folder
+ touch a.txt b.txt c.png
+ ls
+ cd ..
+ ./host.sh /folder
+
+4. In first instance
+ apt install build-essential -y 
+ nano host.c
+then there we will paste 
+
+ #include<stdio.h>
+ #include<stdlib.h>
+ #include <unistd.h>
+
+int main(int argc, char const *argv[])
+{
+    char p[20];
+    sprintf(p, "%s", argv[1]);
+    char *programName = "sh";
+    char *args[] = {programName, "host.sh", p, NULL};
+    execvp(programName, args);
+}
+5. In FIRST
+ gcc -o host  host.c
+ ./host /folder 
+
+// 92.	Write code in C using fork function that outputs "National Aviation Academy" in 3 processes. Each word must be printed in separate process and no loops are allowed. Use wait and fork functions.
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif 
+#include <sys/stat.h>
+#include <sys/mman.h>
+int main(int argc, char const *argv[])
+{
+  if(fork() > 0){
+      printf("Academy");
+      wait(NULL);
+  }
+  else{
+      if(fork() > 0){
+        printf("Aviation ");
+        wait(NULL); 
+      }
+      else{
+        printf("National ");   
+      }
+  }
+}
+
+//93 - Write code in C to output free memory and available storage of Linux host. You may create shell script and call it in C code.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu 
+ apt update
+ apt install nano
+2. In the first instance
+ nano host.sh
+paste here code:
+
+ #!/bin/bash
+
+# Output free memory information
+echo "Free Memory Information:"
+free -h
+
+# Output available storage information
+echo -e "\nAvailable Storage Information:"
+df -h
+
+3. In first instance
+ chmod 777 host.sh
+ ./host.sh
+4. In first instance
+ apt install build-essential -y 
+ nano host.c
+then there we will paste 
+#include<stdio.h>
+#include<stdlib.h>
+#include <unistd.h>
+
+int main(int argc, char const *argv[])
+{
+    char *programName = "sh";
+    char *args[] = {programName, "host.sh", ".", NULL};
+    execvp(programName, args);
+}
+5. In the first instance
+ gcc -o host  host.c
+ ./host
+
+//94 - Write code in C to output the number of files and total size of given folder in Linux. You may create shell script and call it in C code.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu 
+ apt update
+ apt install nano
+2. In the first instance
+ nano host.sh
+paste here code:
+
+##!/bin/bash
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <folder_path>"
+    exit 1
+fi
+
+folder_path="$1"
+
+# Check if the specified path is a directory
+if [ ! -d "$folder_path" ]; then
+    echo "Error: $folder_path is not a valid directory."
+    exit 1
+fi
+
+# Use find to count the number of files and calculate the total size
+num_files=$(find "$folder_path" -type f | wc -l)
+total_size=$(du -sh "$folder_path" | awk '{print $1}')
+
+echo "Number of files in $folder_path: $num_files"
+echo "Total size of $folder_path: $total_size"
+
+
+3. In first instance
+ chmod 777 host.sh
+ mkdir folder
+ cd folder
+ touch a.txt b.txt c.txt
+ ls
+ cd ..
+ ./host.sh /folder
+
+4. In first instance
+ apt install build-essential -y 
+ nano host.c
+then there we will paste 
+
+ #include<stdio.h>
+ #include<stdlib.h>
+ #include <unistd.h>
+
+int main(int argc, char const *argv[])
+{
+    char p[20];
+    sprintf(p, "%s", argv[1]);
+    char *programName = "sh";
+    char *args[] = {programName, "host.sh", p, NULL};
+    execvp(programName, args);
+}
+5. In FIRST
+ gcc -o host  host.c
+ ./host /folder 
+
+//95 - Write code in C to create array that would take half of available memory and fill it with random numbers. You may create shell script and call it in C code.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu 
+ apt update
+ apt install nano
+2. In the first instance
+ nano host.sh
+paste here code:
+
+# Function to generate a random number
+generate_random_number() {
+  echo $((RANDOM % 1000))
+}
+
+# Get total available memory in kilobytes
+total_memory=$(free -k | awk '/^Mem:/ {print $2}')
+
+# Calculate the size of the array (half of the available memory)
+array_size=$((total_memory / 2048))  # Assuming 2 bytes per element, adjust as needed
+
+# Create an array and fill it with random numbers
+random_array=()
+for ((i = 0; i < array_size; i++)); do
+  random_array+=($(generate_random_number))
+done
+
+# Print the array
+echo "Random array with $array_size elements:"
+echo "${random_array[@]}"
+
+3. In first instance
+ chmod 777 host.sh
+ ./host.sh
+
+
+4. In first instance
+ apt install build-essential -y 
+ nano host.c
+then there we will paste 
+
+#include<stdio.h>
+#include<stdlib.h>
+#include <unistd.h>
+
+int main(int argc, char const *argv[])
+{
+    char *programName = "bash";
+    char *args[] = {programName, "host.sh", NULL};;
+    execvp(programName, args);
+}
+
+
+5. In FIRST
+ gcc -o host  host.c
+ ./host 
+
+//96 - Write code in C to create a process with fork then output resource usage of child process inside the main process. You may create shell script and call it in C code.
+
+1. For first instance 
+ docker run -it -h host --rm ubuntu 
+ apt update
+ apt install nano
+ apt install cron
+2. In the first instance
+ nano host.sh
+paste here code:
+
+ #!/bin/bash
+
+# Create a temporary C source file
+echo "#include <stdio.h>" > temp_child.c
+echo "int main() {" >> temp_child.c
+echo "    int a = 1;" >> temp_child.c
+echo "    for (int i = 0; i < 100000; i++) {" >> temp_child.c
+echo "        a++;" >> temp_child.c
+echo "    }" >> temp_child.c
+echo "    printf(\"%d\\n\", a);" >> temp_child.c
+echo "    return 0;" >> temp_child.c
+echo "}" >> temp_child.c
+
+# Compile the C program
+gcc -o temp_child temp_child.c
+
+# Function to execute the compiled C program
+child_process() {
+    ./temp_child
+}
+
+# Execute the child process
+(child_process) &
+
+# Get the PID of the last background command (child process)
+child_pid=$!
+
+# Wait for the child process to finish
+wait $child_pid
+
+# Output resource usage of the child process
+echo "Resource usage of Child Process:"
+time wait $child_pid
+
+# Clean up temporary files
+rm temp_child.c temp_child
+
+3. In first instance
+ chmod 777 host.sh
+ ./host.sh
+If there any problem with teacher than step 4
+
+4. #include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/resource.h>
+#include <unistd.h>
+
+int main() {
+    pid_t child_pid;
+
+    // Create a child process
+    if ((child_pid = fork()) == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+
+    if (child_pid == 0) {
+        // This code is executed by the child process
+
+        // Simulate some computation in the child process
+        for (int i = 0; i < 100000; i++) {
+            // Some computation here
+        }
+
+        // Exit the child process
+        exit(EXIT_SUCCESS);
+    } else {
+        // This code is executed by the parent process
+
+        // Wait for the child process to finish
+        int status;
+        waitpid(child_pid, &status, 0);
+
+        if (WIFEXITED(status)) {
+            // Child process exited successfully
+
+            // Get and print resource usage of the child process
+            struct rusage usage;
+            if (getrusage(RUSAGE_CHILDREN, &usage) == 0) {
+                printf("Resource usage of Child Process:\n");
+                printf("User CPU time used: %ld.%06ld seconds\n", usage.ru_utime.tv_sec, usage.ru_utime.tv_usec);
+                printf("System CPU time used: %ld.%06ld seconds\n", usage.ru_stime.tv_sec, usage.ru_stime.tv_usec);
+            } else {
+                perror("getrusage");
+            }
+        } else {
+            fprintf(stderr, "Child process did not exit successfully\n");
+        }
+    }
+
+    return 0;
+}
+
+
+// 98.	Write code in C to create a process using fork. Calculate the sum of two random numbers in child process and print result in main process. Use shared variable.
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif 
+#include <sys/stat.h>
+#include <sys/mman.h>
+int main(int argc, char const *argv[])
+{
+    int *number = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        srand(time(NULL)  ^  getpid());
+        *number = 0;
+    if(fork() > 0){
+        wait(NULL);
+        printf("Sum is: %d\n", *number);
+    }
+    else{
+        int number1 = rand() % 10000;
+        srand(time(NULL)  ^  getpid());
+        int number2 = rand() % 10000;
+        *number = number1 + number2;
+        printf("Num1: %d\n", number1);
+        printf("Num2: %d\n", number2);
+    }
+}
+
+// 99.	Write code in C to create a process using fork. Calculate the product of two random numbers in child process and print result in main process. Use shared variable.
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif 
+#include <sys/stat.h>
+#include <sys/mman.h>
+int main(int argc, char const *argv[])
+{
+    int *number = mmap(NULL, sizeof(int), PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        srand(time(NULL)  ^  getpid());
+        *number = 0;
+    if(fork() > 0){
+        wait(NULL);
+        printf("Sum is: %d\n", *number);
+    }
+    else{
+        int number1 = rand() % 10000;
+        srand(time(NULL)  ^  getpid());
+        int number2 = rand() % 10000;
+        *number = number1 * number2;
+        printf("Num1: %d\n", number1);
+        printf("Num2: %d\n", number2);
+    }
+}
+
+// 97.	Write code in C to print PIDs of all the hiearchical parent processes in leaf child process. Use 2 nested fork() calls. Use shared variables
+// 100.	Write code in C that creates a new process using fork(). Then create another process inside child process. Print all children PIDs in the main process. Use shared variables.
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <signal.h>
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#endif 
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <sys/wait.h>
+int main(int argc, char const *argv[])
+{
+    int *number = (int*)mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    int fork_id = fork();
+    if(fork_id > 0){
+        *number = fork_id;
+        printf("Process1 id: %d\n", *number);
+        wait(NULL);
+    }
+    else{
+        *number = fork_id;
+        printf("Process2 id: %d\n", *number);
+        int fork_id2 = fork();
+        *number = fork_id2;
+        if(fork_id2 > 0){
+            *number = fork_id2;
+            printf("Process3 id: %d\n", *number);
+            wait(NULL); 
+        }
+        else{
+            *number = fork_id2;
+            printf("Process4 id: %d\n", *number);
+        }
+    }
+}
